@@ -1,6 +1,6 @@
 """Type definitions."""
 import torch
-from typing import List, Callable, Any, Tuple, Union, Sequence  # noqa
+from typing import List, Callable, Any, Tuple, Union, Sequence, Hashable  # noqa
 
 Tokens = List[str]
 Indexes = List[int]
