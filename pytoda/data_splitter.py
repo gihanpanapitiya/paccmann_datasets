@@ -1,32 +1,30 @@
 """Data splitting utilties."""
-import hashlib
 import os
 import random
-from math import ceil
-from typing import Tuple
-
+import hashlib
 import numpy as np
 import pandas as pd
-
-from .types import Files
+from math import ceil
+from typing import Tuple
+from .types import FileList
 
 
 def csv_data_splitter(
-    data_filepaths: Files,
+    data_filepaths: FileList,
     save_path: str,
     data_type: str,
     mode: str,
     seed: int = 42,
     test_fraction: float = 0.1,
     number_of_columns: int = 12,
-    **kwargs,
+    **kwargs
 ) -> Tuple[str, str]:
     """
     Function for generic splitting into train and test data in csv format.
     This is an eager splitter trying to fit the entire dataset into memory.
 
     Args:
-        data_filepaths (Files): a list of .csv files that contain the data.
+        data_filepaths (FileList): a list of .csv files that contain the data.
         save_path (str): folder to store the training/testing dataset.
         data_type (str): data type (only used as prefix for the saved files).
         mode (str): mode to split data from: "random" and "file".
@@ -43,9 +41,9 @@ def csv_data_splitter(
     """
     # preparation
     random.seed(seed)
-    data_filepaths = (
-        [data_filepaths] if isinstance(data_filepaths, str) else data_filepaths
-    )
+    data_filepaths = [data_filepaths] if isinstance(
+        data_filepaths, str
+    ) else data_filepaths   # yapf:disable
     file_suffix = '{}_{}_fraction_{}_id_{}_seed_{}.csv'
     hash_fn = hashlib.md5()
     if not ('index_col' in kwargs):
@@ -54,8 +52,10 @@ def csv_data_splitter(
     # helper function to produce unique hash. Base hash on df.to_string()
     # but only consider first number_of_columns columns (slow otherwise)
     def _hash_from_df_columns(df, number_of_columns):
-        return df.reindex(sorted(df.columns), axis=1).to_string(
-            columns=sorted(df.columns)[:number_of_columns]
+        return (
+            df.reindex(sorted(df.columns), axis=1).to_string(
+                columns=sorted(df.columns)[:number_of_columns]
+            )
         )
 
     # NOTE: if all *.csv files contain a single sample only
@@ -71,14 +71,14 @@ def csv_data_splitter(
         # compile splits (ceil ensures test_df is not empty)
         test_df = pd.concat(
             [
-                pd.read_csv(data_filepaths[index], **kwargs)
-                for index in file_indexes[: ceil(test_fraction * len(data_filepaths))]
+                pd.read_csv(data_filepaths[index], **kwargs) for index in
+                file_indexes[:ceil(test_fraction * len(data_filepaths))]
             ]
         )
         train_df = pd.concat(
             [
-                pd.read_csv(data_filepaths[index], **kwargs)
-                for index in file_indexes[ceil(test_fraction * len(data_filepaths)) :]
+                pd.read_csv(data_filepaths[index], **kwargs) for index in
+                file_indexes[ceil(test_fraction * len(data_filepaths)):]
             ]
         )
     # random splitting mode:
@@ -86,7 +86,7 @@ def csv_data_splitter(
     elif mode == 'random':
         df = pd.concat(
             [pd.read_csv(data_path, **kwargs) for data_path in data_filepaths],
-            sort=False,
+            sort=False
         )
         sample_indexes = np.arange(df.shape[0])
         random.shuffle(sample_indexes)
@@ -98,20 +98,25 @@ def csv_data_splitter(
     # generate hash (per default uses first number_of_columns
     # columns to define hash)
     number_of_columns = (
-        number_of_columns if test_df.shape[1] > number_of_columns else test_df.shape[1]
+        number_of_columns
+        if test_df.shape[1] > number_of_columns else test_df.shape[1]
     )
-    hash_str = _hash_from_df_columns(
-        train_df, number_of_columns
-    ) + _hash_from_df_columns(test_df, number_of_columns)
+    hash_str = (
+        _hash_from_df_columns(train_df, number_of_columns) +
+        _hash_from_df_columns(test_df, number_of_columns)
+    )
     hash_fn.update(hash_str.encode('utf-8'))
     hash_id = str(int(hash_fn.hexdigest(), 16))[:6]
     # generate file path
     train_filepath = os.path.join(
         save_path,
-        file_suffix.format(data_type, 'train', 1 - test_fraction, hash_id, seed),
+        file_suffix.format(
+            data_type, 'train', 1 - test_fraction, hash_id, seed
+        )
     )
     test_filepath = os.path.join(
-        save_path, file_suffix.format(data_type, 'test', test_fraction, hash_id, seed)
+        save_path,
+        file_suffix.format(data_type, 'test', test_fraction, hash_id, seed)
     )
     # write the dataset
     for path, df in zip([train_filepath, test_filepath], [train_df, test_df]):

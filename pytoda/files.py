@@ -1,14 +1,14 @@
 """Utilities for file handling."""
 import os
-from itertools import repeat, takewhile
-from typing import Sequence
-
 import pandas as pd
+from itertools import takewhile, repeat
 
 
-def count_file_lines(filepath: str, buffer_size: int = 1024 * 1024) -> int:
+def count_file_lines(
+    filepath: str, buffer_size: int = 1024*1024
+) -> int:
     """
-    Count lines in a file without persisting it in memory.
+    Cound lines in a file without persisting it in memory.
 
     Args:
         filepath (str): path to the file.
@@ -23,7 +23,8 @@ def count_file_lines(filepath: str, buffer_size: int = 1024 * 1024) -> int:
         raw_fp = fp.raw
         previous_buffer = None
         for buffer in takewhile(
-            lambda x: x, (raw_fp.read(buffer_size) for _ in repeat(None))
+            lambda x: x,
+            (raw_fp.read(buffer_size) for _ in repeat(None))
         ):
             number_of_lines += buffer.count(new_line)
             previous_buffer = buffer
@@ -31,44 +32,21 @@ def count_file_lines(filepath: str, buffer_size: int = 1024 * 1024) -> int:
     return number_of_lines
 
 
-def read_smi(
-    filepath: str,
-    chunk_size: int = None,
-    index_col: int = 1,
-    names: Sequence[str] = ['SMILES'],
-    header: int = None,
-    *args,
-    **kwargs,
-) -> pd.DataFrame:
+def read_smi(filepath: str, chunk_size: int = None) -> pd.DataFrame:
     """
-    Read a .smi (or .csv file with tab-separated values) in a pd.DataFrame.
+    Read a .smi in a pd.DataFrame.
 
     Args:
         filepath (str): path to a .smi file.
-        chunk_size (int): size of the chunk. Defaults to None, a.k.a. no chunking.
-        index_col (int): Data column used for indexing, defaults to 1.
-        names (Sequence[str]): User-assigned names given to the columns.
-        header (int): Row number to use as column names. Defaults to None.
-        args (): Optional arguments for `pd.read_csv`.
-        kwargs (): Optional keyword arguments for `pd.read_csv`.
+        chunk_size (int): size of the chunk.
+            Defaults to None, a.k.a. no chunking.
 
     Returns:
-        pd.DataFrame: a pd.DataFrame containing the data of the .smi file
-            where the index is the index_col column.
+        pd.DataFrame: a pd.DataFrame containing the SMILES
+            where the index is the compound name.
     """
-    try:
-        return pd.read_csv(
-            filepath,
-            sep='\t',
-            header=header,
-            index_col=index_col,
-            names=names,
-            chunksize=chunk_size,
-            *args,
-            **kwargs,
-        )
-    except IndexError:
-        raise IndexError(
-            'Pandas does not understand the .smi file. The most common '
-            'reason is a wrong delimiter (has to be \\t)'
-        )
+    return pd.read_csv(
+        filepath, sep='\t',
+        header=None, index_col=1, names=['SMILES'],
+        chunksize=chunk_size
+    )
