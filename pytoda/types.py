@@ -1,6 +1,7 @@
 """Type definitions."""
 import torch
 from typing import List, Callable, Any, Tuple, Union, Sequence, Hashable, Iterator  # noqa
+from torch import Tensor
 
 Tokens = List[str]
 Indexes = List[int]
