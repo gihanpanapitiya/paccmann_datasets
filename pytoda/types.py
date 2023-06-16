@@ -1,10 +1,11 @@
 """Type definitions."""
 import torch
-from typing import List, Callable, Any, Tuple, Union  # noqa
+from typing import List, Callable, Any, Tuple, Union, Sequence  # noqa
 
 Tokens = List[str]
 Indexes = List[int]
 SMILESTokenizer = Callable[[str], Tokens]
+Files = Sequence[str]
 FileList = List[str]
 GeneList = List[str]
 FeatureList = List[str]
