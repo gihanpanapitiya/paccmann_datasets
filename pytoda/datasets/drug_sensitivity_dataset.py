@@ -6,7 +6,7 @@ from ..types import GeneList, DrugSensitivityData
 from ..smiles.smiles_language import SMILESLanguage
 from .smiles_dataset import SMILESDataset
 from .gene_expression_dataset import GeneExpressionDataset
-
+from typing import Any
 
 class DrugSensitivityDataset(Dataset):
     """
@@ -15,7 +15,7 @@ class DrugSensitivityDataset(Dataset):
 
     def __init__(
         self,
-        drug_sensitivity_filepath: str,
+        drug_sensitivity_filepath: Any, # path to file or dataframe
         smi_filepath: str,
         gene_expression_filepath: str,
         drug_sensitivity_dtype: torch.dtype = torch.float,
@@ -156,9 +156,12 @@ class DrugSensitivityDataset(Dataset):
         self.drug_sensitivity_processing_parameters = (
             drug_sensitivity_processing_parameters
         )
-        self.drug_sensitivity_df = pd.read_csv(
-            self.drug_sensitivity_filepath, index_col=0
-        )
+        if isinstance(self.drug_sensitivity_filepath, pd.DataFrame): # gihan
+            self.drug_sensitivity_df = self.drug_sensitivity_filepath
+        else:
+            self.drug_sensitivity_df = pd.read_csv(
+                self.drug_sensitivity_filepath, index_col=0)
+
         # NOTE: filter based on the availability
         self.available_drugs = set(
             self.smiles_dataset.sample_to_index_mapping.keys()
